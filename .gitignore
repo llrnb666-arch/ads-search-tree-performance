@@ -1,0 +1,23 @@
+# CMake build products
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+
+# Compiled files
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
