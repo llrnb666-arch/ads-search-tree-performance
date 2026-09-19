@@ -1,15 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define MAXN 21
+#include "avl.h"
 
-typedef struct node {
-    int val;
-    int height;
-    struct node *left;
-    struct node *right;
-} node;
-
-int get_height(node *root) {
+int avl_get_height(AVLNode *root) {
 
     if (root == NULL)
         return -1;
@@ -17,32 +10,33 @@ int get_height(node *root) {
     return root->height;
 }
 
-int max(int a, int b) {
+static int avl_max(int a, int b) {
 
     return a > b ? a : b;
 }
 
-void update_height(node *root) {
+void avl_update_height(AVLNode *root) {
 
     if (root == NULL)
         return;
     else
-        root->height = max(get_height(root->left), get_height(root->right)) + 1;
+        root->height =
+            avl_max(avl_get_height(root->left), avl_get_height(root->right)) + 1;
 }
 
-int get_balanced_factor(node *root) {
+int avl_get_balance_factor(AVLNode *root) {
 
     if (root == NULL)
         return 0;
-    return get_height(root->left) - get_height(root->right);
+    return avl_get_height(root->left) - avl_get_height(root->right);
 }
 
-node *create_node(int val) {
+AVLNode *avl_create_node(int val) {
 
-    node *new_node = malloc(sizeof(*new_node));
+    AVLNode *new_node = malloc(sizeof(*new_node));
     if (new_node == NULL) {
         printf("Memory allocation fails\n");
-        return 0;
+        return NULL;
     }
 
     new_node->height = 0;
@@ -53,67 +47,67 @@ node *create_node(int val) {
     return new_node;
 }
 
-node *left_rotation(node *y) {
+AVLNode *avl_left_rotation(AVLNode *y) {
 
-    node *x = y->right;
+    AVLNode *x = y->right;
 
     y->right = x->left;
     x->left = y;
 
-    update_height(y);
-    update_height(x);
+    avl_update_height(y);
+    avl_update_height(x);
 
     return x;
 }
 
-node *right_rotation(node *y) {
+AVLNode *avl_right_rotation(AVLNode *y) {
 
-    node *x = y->left;
+    AVLNode *x = y->left;
 
     y->left = x->right;
     x->right = y;
 
-    update_height(y);
-    update_height(x);
+    avl_update_height(y);
+    avl_update_height(x);
 
     return x;
 }
 
-node *insert_node(node *root, int val) {
+AVLNode *avl_insert(AVLNode *root, int val) {
 
     if (root == NULL)
-        return create_node(val);
+        return avl_create_node(val);
     if (val < root->val)
-        root->left = insert_node(root->left, val);
+        root->left = avl_insert(root->left, val);
     else if (val > root->val)
-        root->right = insert_node(root->right, val);
+        root->right = avl_insert(root->right, val);
     else
         return root;
 
-    update_height(root);
+    avl_update_height(root);
 
-    int bf = get_balanced_factor(root);
+    int bf = avl_get_balance_factor(root);
 
     if (bf > 1 && val < root->left->val)
-        return right_rotation(root);
+        return avl_right_rotation(root);
 
     if (bf < -1 && val > root->right->val)
-        return left_rotation(root);
+        return avl_left_rotation(root);
 
     if (bf > 1 && val > root->left->val) {
-        root->left = left_rotation(root->left);
-        return right_rotation(root);
+        root->left = avl_left_rotation(root->left);
+        return avl_right_rotation(root);
     }
 
     if (bf < -1 && val < root->right->val) {
-        root->right = right_rotation(root->right);
-        return left_rotation(root);
+        root->right = avl_right_rotation(root->right);
+        return avl_left_rotation(root);
     }
 
     return root;
 }
 
-node *find_min(node *root) {
+AVLNode *avl_find_min(AVLNode *root) {
 
     if (root == NULL)
         return NULL;
@@ -124,20 +118,20 @@ node *find_min(node *root) {
     return root;
 }
 
-node *delete(node *root, int val) {
+AVLNode *avl_delete(AVLNode *root, int val) {
 
     if (root == NULL)
         return NULL;
 
     if (val < root->val)
-        root->left = delete(root->left, val);
+        root->left = avl_delete(root->left, val);
     else if (val > root->val)
-        root->right = delete(root->right, val);
+        root->right = avl_delete(root->right, val);
 
     else {
         if (root->left == NULL || root->right == NULL) {
 
-            node *child;
+            AVLNode *child;
             if (root->left)
                 child = root->left;
             else
@@ -149,59 +143,37 @@ node *delete(node *root, int val) {
 
         else {
 
-            node *successor;
-            successor = find_min(root->right);
+            AVLNode *successor;
+            successor = avl_find_min(root->right);
 
             root->val = successor->val;
-            root->right = delete(root->right, successor->val);
+            root->right = avl_delete(root->right, successor->val);
         }
     }
 
-    update_height(root);
+    avl_update_height(root);
 
-    int bf = get_height(root->left) - get_height(root->right);
+    int bf = avl_get_height(root->left) - avl_get_height(root->right);
     if (bf > 1) {
-        if (get_balanced_factor(root->left) < 0)
-            root->left = left_rotation(root->left);
-        return right_rotation(root);
+        if (avl_get_balance_factor(root->left) < 0)
+            root->left = avl_left_rotation(root->left);
+        return avl_right_rotation(root);
     }
     if (bf < -1) {
-        if (get_balanced_factor(root->right) > 0)
-            root->right = right_rotation(root->right);
-        return left_rotation(root);
+        if (avl_get_balance_factor(root->right) > 0)
+            root->right = avl_right_rotation(root->right);
+        return avl_left_rotation(root);
     }
 
     return root;
 }
 
-void cut_down_tree(node *root) {
+void avl_destroy(AVLNode *root) {
 
     if (root == NULL)
         return;
 
-    cut_down_tree(root->left);
-    cut_down_tree(root->right);
+    avl_destroy(root->left);
+    avl_destroy(root->right);
     free(root);
-}
-
-int main(void) {
-
-    int N;
-    scanf(" %d", &N);
-
-    node *root = NULL;
-
-    for (int i = 0; i < N; i++) {
-
-        int val;
-        scanf(" %d", &val);
-
-        root = insert_node(root, val);
-    }
-
-    printf("%d\n", root->val);
-
-    cut_down_tree(root);
-
-    return 0;
 }
